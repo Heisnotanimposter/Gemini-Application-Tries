@@ -1,0 +1,40 @@
+<!DOCTYPE html>  
+<html lang="en">  
+<head>  
+    <meta charset="UTF-8">  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">  
+    <title>Gemini-Inspired Task List & Chat</title> <!-- Updated Title -->  
+    <link rel="stylesheet" href="style.css">  
+</head>  
+<body>  
+    <div class="container">  
+        <h1>Gemini-Powered App (Simulated - MCP)</h1> <!-- Slightly updated H1 -->  
+
+        <div class="input-area">  
+            <input type="text" id="newTaskInput" placeholder="Add a task...">  
+            <button id="addTaskButton">Add Task</button>  
+        </div>  
+
+        <!-- --- NEW CHAT INTERFACE SECTION --- -->  
+        <div class="chat-interface">  
+            <h2>Chat with Gemini</h2>  
+            <div id="chatBox" class="chat-box">  
+                <!-- Chat messages will be dynamically added here -->  
+                <div class="message bot-message">Welcome! Ask me anything.</div>  
+            </div>  
+            <div class="chat-input-area">  
+                <input type="text" id="chatInput" placeholder="Type your message...">  
+                <button id="sendChatMessageButton">Send</button>  
+            </div>  
+        </div>  
+        <!-- --- END NEW CHAT INTERFACE SECTION --- -->  
+
+        <ul id="taskList">  
+            <!-- Tasks will be dynamically added here -->  
+        </ul>  
+    </div>  
+
+    <script src="geminiService.js"></script> <!-- geminiService first as script.js might use it -->  
+    <script src="script.js"></script>  
+</body>  
+</html>  

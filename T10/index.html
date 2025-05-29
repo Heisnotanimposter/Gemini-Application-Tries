@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strategy Builder (Plain JS)</title>
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <div class="app-container">
+        <div class="top-bar">
+            <button id="save-btn">Save Strategy</button>
+            <button id="load-btn">Load Strategy</button>
+            <button id="validate-btn">Validate Strategy</button>
+        </div>
+        <div class="main-content">
+            <div class="palette" id="palette">
+                <h3>Components</h3>
+                <div class="palette-item" draggable="true" data-type="economic_indicator">Economic Indicator</div>
+                <div class="palette-item" draggable="true" data-type="moving_average">Moving Average</div>
+                <div class="palette-item" draggable="true" data-type="conditional_logic">Conditional Logic (If/Then)</div>
+                <div class="palette-item" draggable="true" data-type="arithmetic_operation">Arithmetic Operation</div>
+                <div class="palette-item" draggable="true" data-type="signal_action">Signal Action</div>
+                <div class="palette-item" draggable="true" data-type="gemini_analysis">Gemini Analysis</div>
+            </div>
+            <div class="canvas-container" id="canvas-container">
+                </div>
+            <div class="config-panel" id="config-panel">
+                <h3>Configuration</h3>
+                <p>Select a node to configure.</p>
+                </div>
+        </div>
+    </div>
+
+    <script src="./script.js"></script>
+</body>
+</html>
