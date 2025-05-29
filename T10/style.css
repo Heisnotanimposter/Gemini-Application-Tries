@@ -1,0 +1,116 @@
+body {
+    margin: 0;
+    font-family: sans-serif;
+    overflow: hidden; /* Prevent body scroll, canvas handles overflow */
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.top-bar {
+    padding: 10px;
+    background-color: #f0f0f0;
+    border-bottom: 1px solid #ccc;
+    display: flex;
+    gap: 10px;
+}
+
+.main-content {
+    display: flex;
+    flex-grow: 1;
+    overflow: hidden; /* Prevent main content scroll */
+}
+
+.palette {
+    width: 200px;
+    background-color: #e0e0e0;
+    padding: 10px;
+    overflow-y: auto; /* Allow palette to scroll if needed */
+    border-right: 1px solid #ccc;
+    flex-shrink: 0; /* Prevent palette from shrinking */
+}
+
+.palette-item {
+    padding: 8px;
+    margin-bottom: 8px;
+    background-color: #fff;
+    border: 1px solid #aaa;
+    cursor: grab;
+    text-align: center;
+    border-radius: 4px;
+    box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.palette-item:active {
+    cursor: grabbing;
+}
+
+.canvas-container {
+    flex-grow: 1;
+    position: relative; /* Needed for absolute positioning of nodes */
+    overflow: auto; /* Allow canvas to scroll */
+    background-color: #f9f9f9;
+}
+
+.node {
+    position: absolute;
+    padding: 15px;
+    background-color: #fff;
+    border: 2px solid #3498db;
+    border-radius: 8px;
+    cursor: grab;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+    min-width: 100px;
+    text-align: center;
+    user-select: none; /* Prevent text selection during drag */
+}
+
+.node.selected {
+    border-color: #e74c3c;
+    box-shadow: 0 0 8px rgba(231, 76, 60, 0.5);
+}
+
+.node:active {
+    cursor: grabbing;
+}
+
+/* Basic styling for config panel */
+.config-panel {
+    width: 250px;
+    background-color: #e0e0e0;
+    padding: 10px;
+    overflow-y: auto; /* Allow panel to scroll if needed */
+    border-left: 1px solid #ccc;
+    flex-shrink: 0; /* Prevent panel from shrinking */
+}
+
+.config-panel h3 {
+    margin-top: 0;
+}
+
+.config-panel div {
+    margin-bottom: 10px;
+}
+
+.config-panel label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.config-panel input[type="text"],
+.config-panel input[type="number"],
+.config-panel select,
+.config-panel textarea {
+    width: 100%;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box; /* Include padding and border in element's total width */
+}
