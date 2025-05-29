@@ -1,0 +1,164 @@
+/* style.css - Add these styles */  
+
+/* Basic chat container */  
+.chat-interface {  
+    margin-top: 20px; /* Add some space above the chat */  
+    margin-bottom: 20px; /* Add some space below the chat */  
+    border: 1px solid #ccc; /* Add a border around the chat section */  
+    padding: 15px;  
+    border-radius: 8px;  
+    background-color: #f9f9f9;  
+}  
+
+/* Chat box where messages appear */  
+.chat-box {  
+    height: 300px; /* Fixed height for the chat area */  
+    overflow-y: auto; /* Add scroll if content exceeds height */  
+    border: 1px solid #ddd;  
+    padding: 10px;  
+    margin-bottom: 10px;  
+    display: flex; /* Use flexbox for message layout */  
+    flex-direction: column; /* Stack messages vertically */  
+    gap: 10px; /* Space between messages */  
+    background-color: #fff;  
+    border-radius: 4px;  
+}  
+
+/* Individual message styles */  
+.message {  
+    padding: 8px 12px;  
+    border-radius: 15px; /* Rounded corners for messages */  
+    max-width: 80%; /* Limit message width */  
+    word-wrap: break-word; /* Prevent long words from overflowing */  
+}  
+
+/* Styles for messages from the user */  
+.user-message {  
+    background-color: #007bff; /* Blue background */  
+    color: white; /* White text */  
+    align-self: flex-end; /* Align to the right */  
+    text-align: right;  
+}  
+
+/* Styles for messages from the bot (Gemini) */  
+.bot-message {  
+    background-color: #e9e9eb; /* Light grey background */  
+    color: #333; /* Dark text */  
+    align-self: flex-start; /* Align to the left */  
+    text-align: left;  
+}  
+
+/* Input area for new chat messages */  
+.chat-input-area {  
+    display: flex; /* Arrange input and button in a row */  
+    gap: 10px; /* Space between input and button */  
+}  
+
+.chat-input-area input[type="text"] {  
+    flex-grow: 1; /* Allow input field to take up available space */  
+    padding: 8px;  
+    border: 1px solid #ccc;  
+    border-radius: 4px;  
+}  
+
+.chat-input-area button {  
+    padding: 8px 15px;  
+    background-color: #28a745; /* Green button */  
+    color: white;  
+    border: none;  
+    border-radius: 4px;  
+    cursor: pointer;  
+    transition: background-color 0.2s ease;  
+}  
+
+.chat-input-area button:hover {  
+    background-color: #218838;  
+}  
+
+/* Add or adjust existing styles if needed */  
+/* For example, you might want to adjust the main .container padding */  
+.container {  
+    max-width: 800px; /* Keep container width reasonable */  
+    margin: 20px auto;  
+    padding: 20px;  
+    background-color: #fff;  
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);  
+    border-radius: 8px;  
+}  
+
+h1, h2 {  
+    text-align: center;  
+    color: #333;  
+}  
+
+.input-area, .chat-input-area {  
+    display: flex;  
+    gap: 10px;  
+    margin-bottom: 20px;  
+}  
+
+.input-area input[type="text"] {  
+    flex-grow: 1;  
+    padding: 10px;  
+    border: 1px solid #ccc;  
+    border-radius: 4px;  
+}  
+
+.input-area button {  
+    padding: 10px 15px;  
+    background-color: #007bff;  
+    color: white;  
+    border: none;  
+    border-radius: 4px;  
+    cursor: pointer;  
+    transition: background-color 0.2s ease;  
+}  
+
+.input-area button:hover {  
+    background-color: #0056b3;  
+}  
+
+#taskList {  
+    list-style: none;  
+    padding: 0;  
+}  
+
+#taskList li {  
+    background-color: #e9ecef;  
+    padding: 10px;  
+    margin-bottom: 8px;  
+    border-radius: 4px;  
+    display: flex;  
+    justify-content: space-between;  
+    align-items: center;  
+}  
+
+#taskList li.completed {  
+    text-decoration: line-through;  
+    background-color: #d4edda;  
+}  
+
+#taskList li button {  
+    margin-left: 5px;  
+    padding: 5px 10px;  
+    cursor: pointer;  
+    border: none;  
+    border-radius: 3px;  
+}  
+
+#taskList li button:nth-of-type(1) { /* Complete/Undo button */  
+    background-color: #ffc107; /* Yellow */  
+}  
+
+#taskList li button:nth-of-type(1):hover {  
+    background-color: #e0a800;  
+}  
+
+#taskList li button:nth-of-type(2) { /* Delete button */  
+    background-color: #dc3545; /* Red */  
+    color: white;  
+}  
+
+#taskList li button:nth-of-type(2):hover {  
+    background-color: #c82333;  
+}  
