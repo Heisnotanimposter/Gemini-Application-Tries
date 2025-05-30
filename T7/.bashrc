@@ -1,0 +1,1 @@
+export GOOGLE_API_KEY=AIzaSyCVcLlF3P4q2hVSeUJXWApxVf_3tYPeUpo
