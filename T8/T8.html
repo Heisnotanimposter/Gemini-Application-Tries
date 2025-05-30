@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tendency Gathering</title>
+    <style>
+        body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: #f0f0f0; position: relative; flex-direction: column; }
+        #top-controls { display: flex; width: 400px; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+        #status-layer { background-color: rgba(255, 255, 255, 0.8); padding: 10px; border-radius: 5px; font-size: 0.8em; line-height: 1.2; }
+        #gathering-place { position: relative; width: 400px; height: 400px; border-radius: 50%; background-color: #ddd; overflow: hidden; margin-bottom: 20px; }
+        .zone { position: absolute; width: 50%; height: 50%; display: flex; justify-content: center; align-items: center; opacity: 0.7; }
+        #zone-top-left { top: 0; left: 0; background-color: #a8dadc; border-radius: 50% 0 0 0; }
+        #zone-top-right { top: 0; right: 0; background-color: #457b9d; border-radius: 0 50% 0 0; }
+        #zone-bottom-left { bottom: 0; left: 0; background-color: #1d3557; border-radius: 0 0 50% 0; }
+        #zone-bottom-right { bottom: 0; right: 0; background-color: #e63946; border-radius: 0 0 0 50%; }
+        .zone-icon { font-size: 2em; color: #fff; }
+        .character { position: absolute; width: 20px; height: 20px; border-radius: 50%; }
+        #atmosphere-label { position: absolute; bottom: -40px; font-size: 1.2em; text-align: center; width: 100%; }
+        #restart-button-container { display: flex; justify-content: center; width: 100%; }
+        #restart-button { padding: 10px 20px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div id="top-controls">
+        <div id="status-layer"></div>
+    </div>
+    <div id="gathering-place">
+        <div id="zone-top-left" class="zone" data-color="#a8dadc" data-label="Structure"><span class="zone-icon">⚙️</span></div>
+        <div id="zone-top-right" class="zone" data-color="#457b9d" data-label="Communication"><span class="zone-icon">💬</span></div>
+        <div id="zone-bottom-left" class="zone" data-color="#1d3557" data-label="Creativity"><span class="zone-icon">🎨</span></div>
+        <div id="zone-bottom-right" class="zone" data-color="#e63946" data-label="Investigation"><span class="zone-icon">🔍</span></div>
+        <div id="atmosphere-label"></div>
+    </div>
+    <div id="restart-button-container">
+        <button id="restart-button">Restart</button>
+    </div>
+    <script>
+        const statusLayer = document.getElementById('status-layer');
+        const gatheringPlace = document.getElementById('gathering-place');
+        const atmosphereLabel = document.getElementById('atmosphere-label');
+        const restartButton = document.getElementById('restart-button');
+        const zones = [
+            { id: 'zone-top-left', color: '#a8dadc', label: 'A Tendency Towards Structure' },
+            { id: 'zone-top-right', color: '#457b9d', label: 'A Tendency Towards Communication' },
+            { id: 'zone-bottom-left', color: '#1d3557', label: 'A Tendency Towards Creativity' },
+            { id: 'zone-bottom-right', color: '#e63946', label: 'A Tendency Towards Investigation' }
+        ];
+        const numCharacters = 16;
+        const characters = [];
+        let animationIntervals = [];
+
+        function updateStatus(data) {
+            let statusHTML = '<b>Status:</b><br>';
+            for (const key in data) {
+                statusHTML += `${key}: ${data[key]}<br>`;
+            }
+            statusLayer.innerHTML = statusHTML;
+        }
+
+        function createCharacter(zoneIndex) {
+            const char = document.createElement('div');
+            char.classList.add('character');
+            const baseHue = [200, 210, 220, 0][zoneIndex];
+            const saturation = Math.floor(Math.random() * 30) + 70;
+            const lightness = Math.floor(Math.random() * 40) + 40;
+            char.style.backgroundColor = `hsl(${baseHue}, ${saturation}%, ${lightness}%)`;
+            char.dataset.zone = zoneIndex;
+            gatheringPlace.appendChild(char);
+            return char;
+        }
+
+        function getRandomPosition() {
+            const radius = 180;
+            const angle = Math.random() * 2 * Math.PI;
+            const x = radius * Math.cos(angle) + 200 - 10;
+            const y = radius * Math.sin(angle) + 200 - 10;
+            return { x, y };
+        }
+
+        function getZoneCenter(zoneIndex) {
+            const radius = 100;
+            const angleOffset = Math.PI / 4;
+            const angleIncrement = Math.PI / 2;
+            const angle = angleOffset + zoneIndex * angleIncrement;
+            const x = radius * Math.cos(angle) + 200 - 10;
+            const y = radius * Math.sin(angle) + 200 - 10;
+            return { x, y };
+        }
+
+        function animateCharacter(character, index) {
+            const zoneIndex = parseInt(character.dataset.zone);
+            const target = getZoneCenter(zoneIndex);
+            let currentX = parseFloat(character.style.left) || getRandomPosition().x;
+            let currentY = parseFloat(character.style.top) || getRandomPosition().y;
+            const speed = 2;
+            let step = 0;
+            const interval = setInterval(() => {
+                step++;
+                const dx = target.x - currentX;
+                const dy = target.y - currentY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                updateStatus({
+                    'Animation Step': step,
+                    [`Char ${index} Zone`]: zoneIndex,
+                    [`Char ${index} Distance`]: distance.toFixed(2)
+                });
+                if (distance < speed) {
+                    character.style.left = target.x + 'px';
+                    character.style.top = target.y + 'px';
+                    clearInterval(interval);
+                    animationIntervals[index] = null;
+                    if (!animationIntervals.some(val => val !== null)) {
+                        updateAtmosphere();
+                    }
+                } else {
+                    const angle = Math.atan2(dy, dx);
+                    currentX += speed * Math.cos(angle);
+                    currentY += speed * Math.sin(angle);
+                    character.style.left = currentX + 'px';
+                    character.style.top = currentY + 'px';
+                }
+            }, 20);
+            animationIntervals[index] = interval;
+        }
+
+        function startDrift() {
+            animationIntervals.forEach(interval => clearInterval(interval));
+            animationIntervals = new Array(numCharacters).fill(null);
+            characters.forEach((char, index) => {
+                char.style.left = getRandomPosition().x + 'px';
+                char.style.top = getRandomPosition().y + 'px';
+                animateCharacter(char, index);
+            });
+            gatheringPlace.style.backgroundColor = '#ddd';
+            atmosphereLabel.textContent = 'Drifting...';
+            updateStatus({ 'State': 'Drifting' });
+        }
+
+        function updateAtmosphere() {
+            const zoneContributions = [0, 0, 0, 0];
+            characters.forEach(char => {
+                const zoneIndex = parseInt(char.dataset.zone);
+                const distance = Math.sqrt(Math.pow(parseFloat(char.style.left) + 10 - getZoneCenter(zoneIndex).x, 2) + Math.pow(parseFloat(char.style.top) + 10 - getZoneCenter(zoneIndex).y, 2));
+                const normalizedDistance = Math.max(0, 1 - (distance / 150));
+                zoneContributions[zoneIndex] += normalizedDistance;
+            });
+
+            let finalColor = [0, 0, 0];
+            let strongestTendencyIndex = -1;
+            let maxContribution = -1;
+            const sortedContributions = [];
+
+            for (let i = 0; i < 4; i++) {
+                const contributionRatio = zoneContributions[i] / (numCharacters / 4);
+                const rgb = hexToRgb(zones[i].color);
+                finalColor[0] += rgb.r * contributionRatio;
+                finalColor[1] += rgb.g * contributionRatio;
+                finalColor[2] += rgb.b * contributionRatio;
+                sortedContributions.push({ label: zones[i].label.split('Towards ')[1], value: contributionRatio.toFixed(2) });
+                if (contributionRatio > maxContribution) {
+                    maxContribution = contributionRatio;
+                    strongestTendencyIndex = i;
+                }
+            }
+
+            sortedContributions.sort((a, b) => b.value - a.value);
+
+            gatheringPlace.style.backgroundColor = `rgb(${Math.round(finalColor[0])}, ${Math.round(finalColor[1])}, ${Math.round(finalColor[2])})`;
+            if (strongestTendencyIndex !== -1) {
+                atmosphereLabel.textContent = `Atmosphere: ${zones[strongestTendencyIndex].label.split('Towards ')[1]}`;
+            } else {
+                atmosphereLabel.textContent = 'Atmosphere Settled';
+            }
+            updateStatus({ 'State': 'Settled', 'Zone Contributions': sortedContributions });
+        }
+
+        function hexToRgb(hex) {
+            const bigint = parseInt(hex.slice(1), 16);
+            const r = (bigint >> 16) & 255;
+            const g = (bigint >> 8) & 255;
+            const b = bigint & 255;
+            return { r, g, b };
+        }
+
+        for (let i = 0; i < numCharacters; i++) {
+            characters.push(createCharacter(i % 4));
+        }
+
+        restartButton.addEventListener('click', startDrift);
+        startDrift();
+    </script>
+</body>
+</html>

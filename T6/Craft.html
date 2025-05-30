@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Improved 3D Minecraft</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        #gameCanvas { width: 100vw; height: 100vh; background-color: #ADD8E6; } /* Light Blue Sky */
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+
+    <script type="module">
+      import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.module.js';
+      import { PointerLockControls } from 'https://threejs.org/examples/jsm/controls/PointerLockControls.js';
+      import SimplexNoise from 'https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/4.0.1/simplex-noise.min.js';
+
+        // Scene setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+        const canvas = document.getElementById('gameCanvas');
+        const renderer = new THREE.WebGLRenderer({ canvas: canvas });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio( window.devicePixelRatio );  // Improves visual quality, but can reduce performance.
+
+        // Pointer Lock Controls
+        const controls = new PointerLockControls(camera, document.body);
+
+        const clock = new THREE.Clock();
+
+        let moveForward = false;
+        let moveBackward = false;
+        let moveLeft = false;
+        let moveRight = false;
+        let canJump = false;
+
+        const velocity = new THREE.Vector3();
+        const direction = new THREE.Vector3();
+
+        const onKeyDown = function (event) {
+            switch (event.code) {
+                case 'ArrowUp':
+                case 'KeyW':
+                    moveForward = true;
+                    break;
+                case 'ArrowLeft':
+                case 'KeyA':
+                    moveLeft = true;
+                    break;
+                case 'ArrowDown':
+                case 'KeyS':
+                    moveBackward = true;
+                    break;
+                case 'ArrowRight':
+                case 'KeyD':
+                    moveRight = true;
+                    break;
+                case 'Space':
+                    if (canJump === true) velocity.y += 350;
+                    canJump = false; // Prevent double jumps
+                    break;
+            }
+        };
+
+        const onKeyUp = function (event) {
+            switch (event.code) {
+                case 'ArrowUp':
+                case 'KeyW':
+                    moveForward = false;
+                    break;
+                case 'ArrowLeft':
+                case 'KeyA':
+                    moveLeft = false;
+                    break;
+                case 'ArrowDown':
+                case 'KeyS':
+                    moveBackward = false;
+                    break;
+                case 'ArrowRight':
+                case 'KeyD':
+                    moveRight = false;
+                    break;
+            }
+        };
+
+        document.addEventListener('keydown', onKeyDown);
+        document.addEventListener('keyup', onKeyUp);
+
+        document.body.addEventListener('click', function () {
+            controls.lock();
+        });
+
+        // World Generation Parameters
+        const worldWidth = 32;
+        const worldHeight = 8;
+        const worldDepth = 32;
+        const blockSize = 1;
+        const terrainHeightScale = 5;
+        const terrainDetail = 0.1;
+
+        // Initialize Simplex Noise
+        const simplex = new SimplexNoise();
+
+        // Block Material - Add texture loading!
+        const blockMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 }); // Brown Dirt
+
+        // Function to create a block
+        function createBlock(x, y, z) {
+            const geometry = new THREE.BoxGeometry(blockSize, blockSize, blockSize);
+            const cube = new THREE.Mesh(geometry, blockMaterial);
+            cube.position.set(x, y, z);
+            return cube;
+        }
+
+        // World Generation using Simplex Noise
+        const chunk = new THREE.Group();
+        for (let x = 0; x < worldWidth; x++) {
+            for (let z = 0; z < worldDepth; z++) {
+                // Calculate terrain height using Simplex Noise
+                let terrainHeight = Math.floor(simplex.noise2D(x * terrainDetail, z * terrainDetail) * terrainHeightScale);
+
+                for (let y = 0; y < worldHeight; y++) {
+                    if (y <= terrainHeight) {
+                        const cube = createBlock(x * blockSize, y * blockSize, z * blockSize);
+                        chunk.add(cube);
+                    }
+                }
+            }
+        }
+        scene.add(chunk);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0x404040); // Soft white light
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        directionalLight.position.set(1, 1, 1).normalize();
+        scene.add(directionalLight);
+
+        // Camera setup
+        camera.position.y = 5;
+        camera.position.z = 10;
+
+        //Collision
+        const worldBlocks = [];
+        for (let i = 0; i < chunk.children.length; i++){
+          worldBlocks.push(chunk.children[i].position);
+        }
+
+        function collides(x, y, z) {
+          for (let i = 0; i < worldBlocks.length; i++){
+            if(Math.abs(worldBlocks[i].x - x) < .9 && Math.abs(worldBlocks[i].y - y) < .9 && Math.abs(worldBlocks[i].z - z) < .9){
+              return true;
+            }
+          }
+          return false;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const delta = clock.getDelta();
+
+            velocity.x -= velocity.x * 10.0 * delta;
+            velocity.z -= velocity.z * 10.0 * delta;
+
+            velocity.y -= 9.8 * 100.0 * delta;
+
+            direction.z = Number(moveForward) - Number(moveBackward);
+            direction.x = Number(moveRight) - Number(moveLeft);
+            direction.normalize(); // ensures consistent movements in all directions
+
+            if (moveForward || moveBackward) velocity.z -= direction.z * 400.0 * delta;
+            if (moveLeft || moveRight) velocity.x -= direction.x * 400.0 * delta;
+
+            //Checking to see what direction player is moving in before moving.
+            let newXPosition = controls.getObject().position.x - (velocity.x * delta);
+            let newYPosition = controls.getObject().position.y;
+            let newZPosition = controls.getObject().position.z - (velocity.z * delta);
+
+            if(!collides(newXPosition, newYPosition, newZPosition)){
+              controls.moveRight(- velocity.x * delta);
+              controls.moveForward(- velocity.z * delta);
+            } else {
+              velocity.x = 0;
+              velocity.z = 0;
+            }
+
+            //Checking to see if player can jump, making sure that the camera position is not below 2 and that there are no collisions to jump
+            if (controls.getObject().position.y < 2) {
+              velocity.y = 0;
+              controls.getObject().position.y = 2;
+              canJump = true;
+            }
+            controls.getObject().position.y += (velocity.y * delta);
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', function () {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }, false);
+
+        animate();
+    </script>
+</body>
+</html>
