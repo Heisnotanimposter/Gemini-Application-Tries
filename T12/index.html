@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>General AI Explorer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>General AI Explorer</h1>
+
+    <div id="chat-window">
+        <div class="message ai-message">
+            <p>Hello! Ask me anything about AI concepts, generate code, or just chat.</p>
+        </div>
+        <!-- AI and User messages will be added here -->
+    </div>
+
+    <div id="input-area">
+        <textarea id="user-input" placeholder="Enter your prompt here..."></textarea>
+        <button id="send-button">Send</button>
+    </div>
+
+    <div id="loading" class="hidden">Thinking...</div>
+
+    <!-- Load marked library for rendering markdown -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Your script -->
+    <script src="script.js"></script>
+</body>
+</html>
