@@ -1,0 +1,236 @@
+:root {  
+    --primary-color: #4285F4; /* Google Blue */  
+    --secondary-color: #0F9D58; /* Google Green */  
+    --background-color: #f0f2f5; /* Light grey/blue background */  
+    --container-bg: #ffffff;  
+    --user-bubble-bg: #e2f2ff; /* Lighter blue */  
+    --user-bubble-text: #333;  
+    --bot-bubble-bg: #f1f0f0; /* Light grey */  
+    --bot-bubble-text: #333;  
+    --timestamp-color: #888;  
+    --border-color: #ddd;  
+    --shadow-color: rgba(0, 0, 0, 0.1);  
+    --border-radius-small: 8px;  
+    --border-radius-large: 12px;  
+}  
+
+
+body {  
+    font-family: 'Roboto', sans-serif; /* Added a common modern font */  
+    margin: 0;  
+    padding: 20px;  
+    background-color: var(--background-color);  
+    display: flex;  
+    justify-content: center;  
+    align-items: center;  
+    min-height: 100vh;  
+    box-sizing: border-box; /* Include padding in element's total width and height */  
+}  
+
+.chat-container {  
+    width: 100%;  
+    max-width: 600px;  
+    background-color: var(--container-bg);  
+    box-shadow: 0 5px 15px var(--shadow-color);  
+    border-radius: var(--border-radius-large);  
+    overflow: hidden;  
+    display: flex;  
+    flex-direction: column;  
+    height: 85vh; /* Slightly more height */  
+}  
+
+.chat-box {  
+    flex-grow: 1;  
+    padding: 15px;  
+    overflow-y: auto;  
+    display: flex;  
+    flex-direction: column;  
+    gap: 10px; /* Add space between messages using gap */  
+    scroll-behavior: smooth; /* Smooth scrolling */  
+}  
+
+/* Individual Message Styling */  
+.message {  
+    display: flex; /* Use flexbox for avatar and content */  
+    max-width: 85%; /* Slightly more width */  
+    align-items: flex-end; /* Align avatar and text bottom */  
+}  
+
+.avatar {  
+    width: 30px;  
+    height: 30px;  
+    min-width: 30px; /* Prevent shrinking */  
+    border-radius: 50%;  
+    background-color: var(--border-color); /* Placeholder background */  
+    margin-bottom: 5px; /* Small margin below avatar */  
+    /* Optional: Add avatar images */  
+    /* background-image: url('user-avatar.png'); */  
+    /* background-size: cover; */  
+}  
+
+.bot-avatar {  
+     /* background-image: url('bot-avatar.png'); */  
+     /* background-size: cover; */  
+     background-color: var(--primary-color); /* Distinct bot color */  
+     color: white; /* For potential text icon */  
+     display: flex;  
+     justify-content: center;  
+     align-items: center;  
+     font-size: 14px;  
+     font-weight: bold;  
+     /* You could add an icon here instead of text/color */  
+}  
+
+
+.message-content {  
+    padding: 10px 14px; /* Increased padding */  
+    border-radius: var(--border-radius-small);  
+    position: relative; /* For timestamp positioning */  
+    word-break: break-word; /* Prevent long words from overflowing */  
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05); /* Subtle bubble shadow */  
+    flex-grow: 1; /* Allow content to take space */  
+    max-width: calc(100% - 40px); /* Adjust max-width based on avatar size+gap */  
+}  
+
+.message-content p {  
+    margin: 0 0 5px 0; /* Space below text, but not at bottom if timestamp exists */  
+    line-height: 1.4;  
+}  
+
+.timestamp {  
+    display: block; /* Make timestamp appear on a new line */  
+    font-size: 0.7rem;  
+    color: var(--timestamp-color);  
+    text-align: right;  
+    margin-top: 5px; /* Space above timestamp */  
+}  
+
+
+/* Specific User/Bot Message Styling */  
+.user-message {  
+    align-self: flex-end; /* Align user messages to the right */  
+    flex-direction: row-reverse; /* Put avatar on the right */  
+}  
+
+.user-message .message-content {  
+    background-color: var(--user-bubble-bg);  
+    color: var(--user-bubble-text);  
+    margin-right: 10px; /* Space between bubble and avatar */  
+}  
+.user-message .avatar {  
+    /* background-image: url('user-avatar.png'); */  
+    /* background-size: cover; */  
+    background-color: var(--secondary-color); /* Distinct user color */  
+    color: white;  
+    display: flex;  
+     justify-content: center;  
+     align-items: center;  
+     font-size: 14px;  
+     font-weight: bold;  
+     margin-left: 10px; /* Space between avatar and bubble */  
+
+}  
+
+
+.bot-message {  
+    align-self: flex-start; /* Align bot messages to the left */  
+    flex-direction: row; /* Put avatar on the left (default flex) */  
+}  
+
+.bot-message .message-content {  
+    background-color: var(--bot-bubble-bg);  
+    color: var(--bot-bubble-text);  
+    margin-left: 10px; /* Space between bubble and avatar */  
+}  
+
+/* Typing Indicator */  
+.typing-indicator .message-content {  
+    font-style: italic;  
+    opacity: 0.7;  
+}  
+/* Simple animation for typing indicator (optional) */  
+.typing-indicator .message-content p {  
+    animation: blink 1s infinite steps(1, start);  
+}  
+
+@keyframes blink {  
+    0%, 100% { opacity: 1; }  
+    50% { opacity: 0.5; }  
+}  
+
+/* Basic Markdown Styling within messages */  
+.message-content strong {  
+    font-weight: bold;  
+}  
+.message-content em {  
+    font-style: italic;  
+}  
+.message-content a {  
+    color: var(--primary-color);  
+    text-decoration: none;  
+}  
+.message-content a:hover {  
+    text-decoration: underline;  
+}  
+/* Add styles for lists, code blocks, etc. if you use a full markdown parser */  
+
+
+/* Input Area */  
+.input-area {  
+    display: flex;  
+    padding: 15px;  
+    border-top: 1px solid var(--border-color);  
+    background-color: var(--container-bg);  
+    align-items: flex-end; /* Align items to the bottom (useful for textarea) */  
+}  
+
+#user-input {  
+    flex-grow: 1;  
+    padding: 10px 12px; /* Increased padding */  
+    border: 1px solid var(--border-color);  
+    border-radius: var(--border-radius-small);  
+    margin-right: 10px;  
+    font-size: 1rem;  
+    max-height: 100px; /* Limit textarea height */  
+    overflow-y: auto; /* Scroll if text exceeds max-height */  
+    resize: none; /* Disable manual resize handle */  
+    box-sizing: border-box;  
+    line-height: 1.4;  
+}  
+
+#user-input:focus {  
+    outline: none;  
+    border-color: var(--primary-color);  
+    box-shadow: 0 0 0 0.1rem rgba(66, 133, 244, 0.25); /* Focus ring */  
+}  
+
+#send-button {  
+    padding: 10px 20px;  
+    background-color: var(--primary-color); /* Use primary color */  
+    color: white;  
+    border: none;  
+    border-radius: var(--border-radius-small);  
+    cursor: pointer;  
+    font-size: 1rem;  
+    transition: background-color 0.2s ease; /* Smooth hover effect */  
+    height: 40px; /* Match textarea height */  
+    display: flex; /* Center icon/text if needed */  
+    justify-content: center;  
+    align-items: center;  
+}  
+
+#send-button:hover {  
+    background-color: #3b78e7; /* Darker shade on hover */  
+}  
+
+#send-button:disabled {  
+    background-color: #cccccc;  
+    cursor: not-allowed;  
+}  
+
+/* Optional: Styles for error messages */  
+.bot-message.error .message-content {  
+    background-color: #ffebeb; /* Light red */  
+    color: #cc0000; /* Dark red */  
+    border: 1px solid #ffcccc;  
+}  
