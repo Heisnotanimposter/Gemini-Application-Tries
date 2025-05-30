@@ -1,0 +1,122 @@
+body {
+    font-family: sans-serif;
+    margin: 20px;
+    background-color: #f4f4f4;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+}
+
+#chat-window {
+    border: 1px solid #ccc;
+    height: 400px;
+    overflow-y: auto;
+    padding: 15px;
+    margin-bottom: 15px;
+    background-color: #fff;
+    border-radius: 8px;
+}
+
+.message {
+    margin-bottom: 15px;
+    padding: 10px;
+    border-radius: 8px;
+    max-width: 80%;
+}
+
+.user-message {
+    background-color: #dcf8c6; /* Light green */
+    margin-left: auto; /* Align to the right */
+    text-align: right;
+}
+
+.ai-message {
+    background-color: #e9e9eb; /* Light grey */
+    margin-right: auto; /* Align to the left */
+    text-align: left;
+}
+
+.message p {
+    margin: 0;
+    word-wrap: break-word; /* Ensure long words wrap */
+    white-space: pre-wrap; /* Preserve line breaks in text */
+}
+
+/* Style for code blocks (from marked) */
+.ai-message pre {
+    background-color: #f4f4f4;
+    border: 1px solid #ddd;
+    border-left: 3px solid #f36d33; /* Orange border */
+    color: #333;
+    page-break-inside: avoid;
+    font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+    font-size: 0.9em;
+    line-height: 1.6;
+    margin-bottom: 1.6em;
+    max-width: 100%;
+    overflow: auto;
+    padding: 1em 1.5em;
+    display: block;
+    word-wrap: break-word;
+}
+
+/* Style for inline code (from marked) */
+.ai-message code {
+    background-color: #fff0f0;
+    color: #cf1322; /* Reddish */
+    font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+    padding: 2px 4px;
+    white-space: pre-wrap;
+    border-radius: 4px;
+}
+
+
+#input-area {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Space between textarea and button */
+}
+
+#user-input {
+    flex-grow: 1; /* Take up available space */
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    resize: none; /* Disable textarea resize handle */
+    height: 60px; /* Adjust height as needed */
+    font-size: 1em;
+}
+
+#send-button {
+    padding: 12px 20px;
+    background-color: #4CAF50; /* Green */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.3s ease;
+    height: 60px; /* Match textarea height */
+}
+
+#send-button:hover {
+    background-color: #45a049;
+}
+
+#send-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+#loading {
+    text-align: center;
+    font-style: italic;
+    color: #555;
+    margin-top: 10px;
+}
+
+.hidden {
+    display: none;
+}
