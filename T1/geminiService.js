@@ -5,7 +5,7 @@
 // use a backend server to call the Gemini API.  
 
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=GEMINI_API_KEY'; // Replace with your actual Gemini API endpoint  
-const API_KEY = 'AIzaSyBTgLdI3dyzIwIm9K2g-CJdrLxZtrjI54Y'; // Replace with your actual Gemini API key  
+const API_KEY = 'Actual API Key'; // Replace with your actual Gemini API key  
 
 const geminiService = {  
     // ... (Existing task functions: addTask, getTasks, updateTask, deleteTask) ...  
