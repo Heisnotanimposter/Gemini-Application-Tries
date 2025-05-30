@@ -3,37 +3,383 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MCP Task Requester</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Protein Explorer & AI Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bio-pv@1.8.10/bio-pv.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .tab-button { padding: 0.5rem 1rem; cursor: pointer; border-bottom: 2px solid transparent; }
+        .tab-button.active { border-bottom-color: #4f46e5; /* Indigo-600 */ font-weight: 600; }
+        .hidden { display: none; }
+        #viewer canvas { border-radius: 0.375rem; } /* rounded-md */
+        /* Custom scrollbar for Gemini response for better aesthetics */
+        #geminiResponse::-webkit-scrollbar { width: 8px; }
+        #geminiResponse::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        #geminiResponse::-webkit-scrollbar-thumb { background: #cbd5e1; /* Slate-300 */ border-radius: 10px; }
+        #geminiResponse::-webkit-scrollbar-thumb:hover { background: #94a3b8; /* Slate-400 */ }
+    </style>
 </head>
-<body>
-    <div class="container">
-        <h1>MCP Task Requester</h1>
+<body class="bg-slate-100 text-slate-800">
 
-        <div class="task-definition-section">
-            <h2>Define Your Task</h2>
-            <textarea id="taskDescription" placeholder="Enter a detailed description of your MCP task here..."></textarea>
+    <header class="bg-indigo-600 text-white p-6 shadow-md">
+        <h1 class="text-3xl font-bold">Protein Explorer & AI Assistant</h1>
+        <p class="mt-1 text-indigo-200">Load 3D protein structures, analyze sequences, and ask an AI questions.</p>
+    </header>
 
-            <div class="mcp-purpose-options">
-                <h3>Select Task Purpose:</h3>
-                <div class="button-group">
-                    <button class="purpose-button" data-purpose="Google Search & Save">Google Search & Save</button>
-                    <button class="purpose-button" data-purpose="Excel Data Processing">Excel Data Processing</button>
-                    <button class="purpose-button" data-purpose="Terminal Command">Terminal Command</button>
-                    <button class="purpose-button" data-purpose="Other">Other (Specify Below)</button>
-                </div>
+    <main class="container mx-auto p-4 lg:p-6">
+        <div class="flex flex-col lg:flex-row gap-6">
+
+            <div class="lg:w-1/3 flex flex-col gap-6">
+                <section class="bg-white p-6 rounded-lg shadow-lg">
+                    <div class="border-b border-slate-200 mb-4">
+                        <nav class="-mb-px flex space-x-4" aria-label="Tabs">
+                            <button id="tabPdb" class="tab-button active" data-tab="pdbInputTab">Load by PDB ID</button>
+                            <button id="tabSeq" class="tab-button" data-tab="sequenceAnalysisTab">Analyze Sequence</button>
+                        </nav>
+                    </div>
+
+                    <div id="pdbInputTab">
+                        <label for="pdbIdInput" class="block text-sm font-medium text-slate-700 mb-1">PDB ID:</label>
+                        <input type="text" id="pdbIdInput" placeholder="e.g., 1AKE" maxlength="4" class="w-full p-2 border border-slate-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        <p class="text-xs text-slate-500 mt-1">Ensure PDB ID is 4 characters (e.g., 1AKE, 6LU7).</p>
+                        <button id="loadPdbBtn" class="mt-3 w-full bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md shadow-sm transition duration-150 ease-in-out">Load PDB</button>
+                    </div>
+
+                    <div id="sequenceAnalysisTab" class="hidden">
+                        <label for="sequenceInput" class="block text-sm font-medium text-slate-700 mb-1">Protein Sequence (FASTA):</label>
+                        <textarea id="sequenceInput" rows="6" placeholder="Paste FASTA sequence here..." class="w-full p-2 border border-slate-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                        <p class="text-xs text-slate-500 mt-1">Only protein sequence (amino acid letters) will be processed. FASTA headers will be ignored.</p>
+                        <button id="analyzeSeqBtn" class="mt-3 w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-md shadow-sm transition duration-150 ease-in-out">Analyze Sequence</button>
+                    </div>
+
+                    <div id="statusMessage" class="hidden mt-4 p-3 rounded-md text-sm"></div>
+
+                    <div id="analysisResults" class="hidden mt-4 border-t border-slate-200 pt-4">
+                        <h3 class="text-lg font-semibold text-slate-700 mb-2">Sequence Analysis Results</h3>
+                        <div>
+                            <p><strong>Sequence Length:</strong> <span id="seqLength"></span></p>
+                            <p><strong>Molecular Weight (approx.):</strong> <span id="molWeight"></span> kDa</p>
+                            <div class="mt-2">
+                                <p><strong>Amino Acid Counts:</strong></p>
+                                <div id="aaCounts" class="text-xs grid grid-cols-2 sm:grid-cols-3 gap-1 mt-1"></div>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <h4 class="text-md font-semibold text-slate-600 mb-1">Predicted/Suggested Structures:</h4>
+                            <p class="text-sm text-slate-500">Based on your sequence, potential matching PDB IDs are suggested below. (Note: This is a demo; actual homology search requires a backend service.)</p>
+                            <button data-pdb-id="1AKE" class="loadSuggestedPdbBtn mt-2 bg-sky-500 hover:bg-sky-600 text-white font-semibold py-1 px-3 rounded-md text-sm transition duration-150 ease-in-out">Load 1AKE (Example)</button>
+                            </div>
+                    </div>
+                </section>
+
+                <section class="bg-white p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold text-slate-700 mb-3">Ask Gemini AI</h2>
+                    <label for="geminiQuestionInput" class="block text-sm font-medium text-slate-700 mb-1">Your Question:</label>
+                    <textarea id="geminiQuestionInput" rows="4" placeholder="e.g., 'What is a protein?', 'Explain active site.', 'What is the function of 1AKE?'" class="w-full p-2 border border-slate-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                    <button id="askGeminiBtn" class="mt-3 w-full bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-4 rounded-md shadow-sm transition duration-150 ease-in-out">
+                        Ask AI <span id="geminiLoading" class="hidden ml-2 animate-spin">&#9696;</span>
+                    </button>
+                    <p class="text-xs text-slate-500 mt-1">AI responses are for informational purposes only and may not always be perfectly accurate.</p>
+                    <h3 class="text-md font-semibold text-slate-600 mt-4 mb-2">AI Response:</h3>
+                    <div id="geminiResponse" class="min-h-[100px] max-h-[300px] border border-slate-200 bg-slate-50 p-3 rounded-md text-sm overflow-y-auto">
+                        No question asked yet.
+                    </div>
+                </section>
             </div>
 
-            <button id="submitTask">Submit Task</button>
+            <div class="lg:w-2/3">
+                <section class="bg-white p-6 rounded-lg shadow-lg h-full">
+                    <h2 class="text-xl font-semibold text-slate-700 mb-3">3D Protein Structure</h2>
+                    <div id="viewer" style="width: 100%; height: 600px; background-color: #1e293b; /* Slate-800 for dark viewer bg */ border-radius: 0.375rem;">
+                        <p class="text-slate-400 p-4 text-center">Load a PDB ID or select a suggested structure to view.</p>
+                    </div>
+                    <div class="mt-4 flex flex-wrap gap-2 items-center">
+                        <label for="representationSelector" class="text-sm font-medium text-slate-700">Representation:</label>
+                        <select id="representationSelector" class="p-2 border border-slate-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="cartoon">Cartoon</option>
+                            <option value="surface">Surface</option>
+                            <option value="spheres">Spheres</option>
+                            <option value="sline">Sticks</option>
+                            <option value="trace">Trace</option>
+                        </select>
+                        <label for="coloringSelector" class="text-sm font-medium text-slate-700 ml-2">Coloring:</label>
+                        <select id="coloringSelector" class="p-2 border border-slate-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="chain">By Chain</option>
+                            <option value="residueType">By Residue Type</option>
+                            <option value="spectrum">Rainbow</option>
+                            <option value="ss">By Secondary Structure</option>
+                        </select>
+                        <button id="resetViewBtn" class="ml-auto bg-slate-500 hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-md shadow-sm text-sm transition duration-150 ease-in-out">Reset View</button>
+                    </div>
+                </section>
+            </div>
         </div>
+    </main>
 
-        <div class="result-section">
-            <h2>Task Result</h2>
-            <pre id="resultDisplay">Results will appear here...</pre>
-            <button id="downloadResultBtn">Download Result</button>
-        </div>
-    </div>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const pdbIdInput = document.getElementById('pdbIdInput');
+        const loadPdbBtn = document.getElementById('loadPdbBtn');
+        const sequenceInput = document.getElementById('sequenceInput');
+        const analyzeSeqBtn = document.getElementById('analyzeSeqBtn');
+        const statusMessage = document.getElementById('statusMessage');
+        const analysisResultsDiv = document.getElementById('analysisResults');
+        const seqLengthSpan = document.getElementById('seqLength');
+        const molWeightSpan = document.getElementById('molWeight');
+        const aaCountsDiv = document.getElementById('aaCounts');
+        
+        const geminiQuestionInput = document.getElementById('geminiQuestionInput');
+        const askGeminiBtn = document.getElementById('askGeminiBtn');
+        const geminiLoading = document.getElementById('geminiLoading');
+        const geminiResponseDiv = document.getElementById('geminiResponse');
 
-    <script src="script.js"></script>
+        const tabPdb = document.getElementById('tabPdb');
+        const tabSeq = document.getElementById('tabSeq');
+        const pdbInputTabDiv = document.getElementById('pdbInputTab');
+        const sequenceAnalysisTabDiv = document.getElementById('sequenceAnalysisTab');
+
+        const representationSelector = document.getElementById('representationSelector');
+        const coloringSelector = document.getElementById('coloringSelector');
+        const resetViewBtn = document.getElementById('resetViewBtn');
+
+        let viewer = null;
+        let currentStructure = null;
+        let currentPdbId = null; // To keep track of the currently loaded PDB ID
+
+        // --- Backend URL ---
+        const BACKEND_URL = 'http://localhost:8000'; // Make sure this matches your Node.js server port
+
+        // --- Tab Functionality ---
+        function switchTab(activeTabButton, activeTabContent) {
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('[id$="Tab"]').forEach(tabDiv => {
+                if (tabDiv.id.endsWith('InputTab') || tabDiv.id.endsWith('AnalysisTab')) { // Check for both naming patterns
+                     tabDiv.classList.add('hidden');
+                }
+            });
+            activeTabButton.classList.add('active');
+            activeTabContent.classList.remove('hidden');
+        }
+        tabPdb.addEventListener('click', () => switchTab(tabPdb, pdbInputTabDiv));
+        tabSeq.addEventListener('click', () => switchTab(tabSeq, sequenceAnalysisTabDiv));
+
+
+        // --- Bio-PV Viewer Initialization ---
+        function initViewer() {
+            if (viewer) { // Clear previous viewer if any
+                viewer.destroy();
+                viewer = null; // Ensure viewer is truly nullified
+            }
+            const viewerDiv = document.getElementById('viewer');
+            viewerDiv.innerHTML = '<p class="text-slate-400 p-4 text-center">Load a PDB ID or select a suggested structure to view.</p>'; // Reset placeholder
+            
+            const options = {
+                width: 'auto', 
+                height: 'auto',
+                antialias: true,
+                quality : 'medium',
+                background: '#1e293b' 
+            };
+            viewer = pv.Viewer(viewerDiv, options); // Pass the div element, not its ID string
+            setupViewerControls();
+        }
+        
+        function setupViewerControls() {
+            if (!viewer) return;
+            representationSelector.onchange = () => updateViewerRepresentation();
+            coloringSelector.onchange = () => updateViewerRepresentation();
+        }
+
+        function updateViewerRepresentation() {
+            if (!currentStructure || !viewer) return; 
+            viewer.clear(); 
+            currentStructure.eachResidue(r => r.setTrace(null)); 
+
+            const currentRep = representationSelector.value;
+            const currentColoring = coloringSelector.value;
+            
+            let colorFunc;
+            switch(currentColoring) {
+                case 'chain': colorFunc = pv.color.byChain(); break;
+                case 'residueType': colorFunc = pv.color.byResidueType(); break;
+                case 'spectrum': colorFunc = pv.color.rainbow(); break;
+                case 'ss': colorFunc = pv.color.bySS(); break;
+                default: colorFunc = pv.color.byChain();
+            }
+            viewer[currentRep]('protein', currentStructure, { color: colorFunc });
+            viewer.autoZoom();
+        }
+
+        resetViewBtn.addEventListener('click', () => {
+            if (viewer) viewer.autoZoom();
+        });
+
+
+        // --- PDB Loading ---
+        loadPdbBtn.addEventListener('click', () => {
+            const pdbId = pdbIdInput.value.trim().toUpperCase();
+            if (pdbId.length === 4) {
+                loadPdbStructure(pdbId);
+            } else {
+                showStatus("Error: PDB ID must be 4 characters.", 'error');
+            }
+        });
+
+        async function loadPdbStructure(pdbId) {
+            showStatus(`Loading PDB ${pdbId}...`, 'loading');
+            analysisResultsDiv.classList.add('hidden'); 
+            
+            if (!viewer) {
+                initViewer(); // Initialize viewer if not already
+            }
+            
+            try {
+                // Use the backend proxy to fetch PDB data
+                const response = await fetch(`${BACKEND_URL}/proxy-pdb/${pdbId}.pdb`);
+                if (!response.ok) {
+                    let errorDetails = `PDB file not found or error fetching: ${response.statusText} (ID: ${pdbId})`;
+                    try {
+                        const errorJson = await response.json();
+                        if (errorJson && errorJson.error) {
+                            errorDetails = `Error from proxy: ${errorJson.error}. Details: ${errorJson.details || response.statusText}`;
+                        }
+                    } catch (e) { /* Ignore if response is not JSON */ }
+                    throw new Error(errorDetails);
+                }
+                const pdbData = await response.text();
+                
+                viewer.clear(); 
+                currentStructure = pv.io.pdb(pdbData, { loadAllModels: false }); 
+                currentPdbId = pdbId; // Store the loaded PDB ID
+
+                updateViewerRepresentation(); // Apply default or selected representation/coloring
+                
+                showStatus(`Successfully loaded PDB: ${pdbId}`, 'success');
+                pdbIdInput.value = pdbId; 
+            } catch (error) {
+                console.error("Error loading PDB:", error);
+                let detailedErrorMessage = `Error: Failed to load PDB data for ${pdbId}.`;
+                if (error.message && error.message.toLowerCase().includes('failed to fetch')) { 
+                    detailedErrorMessage += " This often means the backend server at " + BACKEND_URL + " is not running, not accessible, or there's a network/CORS issue. Check your browser console and server logs for details.";
+                } else if (error.message) { 
+                    detailedErrorMessage = error.message; 
+                }
+                showStatus(detailedErrorMessage, 'error');
+                const viewerDiv = document.getElementById('viewer');
+                viewerDiv.innerHTML = '<p class="text-slate-400 p-4 text-center">Failed to load structure. Please ensure the backend proxy is running and the PDB ID is correct.</p>';
+                currentStructure = null;
+                currentPdbId = null;
+            }
+        }
+
+        // --- Sequence Analysis ---
+        const aminoAcidWeights = {
+            'A': 89.09, 'R': 174.20, 'N': 132.12, 'D': 133.10, 'C': 121.16,
+            'E': 147.13, 'Q': 146.15, 'G': 75.07, 'H': 155.16, 'I': 131.17,
+            'L': 131.17, 'K': 146.19, 'M': 149.21, 'F': 165.19, 'P': 115.13,
+            'S': 105.09, 'T': 119.12, 'W': 204.23, 'Y': 181.19, 'V': 117.15
+        }; 
+
+        analyzeSeqBtn.addEventListener('click', () => {
+            let sequence = sequenceInput.value.trim().toUpperCase();
+            if (sequence.startsWith('>')) { // Remove FASTA header
+                sequence = sequence.substring(sequence.indexOf('\n') + 1);
+            }
+            sequence = sequence.replace(/[^A-Z]/g, ''); // Remove non-amino acid characters
+
+            if (sequence.length === 0) {
+                showStatus("Error: Please paste a valid protein sequence.", 'error');
+                analysisResultsDiv.classList.add('hidden');
+                return;
+            }
+
+            seqLengthSpan.textContent = sequence.length;
+
+            const counts = {};
+            let totalWeight = 0;
+            for (const aa of sequence) {
+                counts[aa] = (counts[aa] || 0) + 1;
+                totalWeight += (aminoAcidWeights[aa] || 0);
+            }
+            // Subtract water molecules (18.015 Da) for each peptide bond formed
+            if (sequence.length > 0) {
+                 totalWeight -= (sequence.length - 1) * 18.015; 
+            }
+
+            molWeightSpan.textContent = (totalWeight / 1000).toFixed(2); // Convert to kDa
+
+            aaCountsDiv.innerHTML = '';
+            // Display counts for all 20 standard amino acids, even if 0
+            Object.keys(aminoAcidWeights).sort().forEach(aa => {
+                const count = counts[aa] || 0;
+                const div = document.createElement('div');
+                div.textContent = `${aa}: ${count}`;
+                aaCountsDiv.appendChild(div);
+            });
+
+            analysisResultsDiv.classList.remove('hidden');
+            showStatus("Sequence analysis complete.", 'success');
+        });
+
+        // --- Show Status ---
+        function showStatus(message, type = 'info') {
+            statusMessage.classList.remove('hidden');
+            statusMessage.textContent = message;
+            statusMessage.className = `mt-4 p-3 rounded-md text-sm ${type === 'error' ? 'bg-red-100 text-red-800' : type === 'success' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`;
+        }
+
+        // --- Gemini AI Integration (via Backend Proxy) ---
+        askGeminiBtn.addEventListener('click', async () => {
+            const question = geminiQuestionInput.value.trim();
+            if (!question) {
+                geminiResponseDiv.textContent = "Please enter a question first.";
+                return;
+            }
+
+            geminiLoading.classList.remove('hidden');
+            geminiResponseDiv.textContent = "Thinking...";
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/ask-gemini`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        question: question,
+                        context: currentPdbId || "No PDB loaded." // Pass PDB ID as context
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP error! Status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                geminiResponseDiv.textContent = data.text;
+            } catch (error) {
+                console.error("Error asking Gemini via backend:", error);
+                geminiResponseDiv.textContent = `Error: ${error.message}. Please check your backend server.`;
+            } finally {
+                geminiLoading.classList.add('hidden');
+            }
+        });
+
+        // --- Load Suggested PDB from Button ---
+        document.querySelectorAll('.loadSuggestedPdbBtn').forEach(button => {
+            button.addEventListener('click', () => {
+                const pdbId = button.getAttribute('data-pdb-id');
+                pdbIdInput.value = pdbId;
+                loadPdbStructure(pdbId);
+                switchTab(tabPdb, pdbInputTabDiv);
+            });
+        });
+
+        // Initial setup for the viewer placeholder
+        initViewer(); 
+    }); 
+</script>
+
 </body>
 </html>
