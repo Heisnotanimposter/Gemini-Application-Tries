@@ -1,0 +1,22 @@
+body {
+    font-family: sans-serif;
+}
+
+#app {
+    margin: 20px;
+}
+
+textarea {
+    width: 500px;
+    height: 100px;
+}
+
+button {
+    padding: 10px 20px;
+}
+
+#output {
+    margin-top: 20px;
+    border: 1px solid #ccc;
+    padding: 10px;
+}
