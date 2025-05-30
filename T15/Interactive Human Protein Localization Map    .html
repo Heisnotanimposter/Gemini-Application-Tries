@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Human Protein Localization Map</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+    <style>
+        body { margin: 0; font-family: 'Inter', sans-serif; overflow: hidden; }
+        #container { width: 100vw; height: 100vh; display: flex; }
+        #renderer-container { flex-grow: 1; height: 100%; position: relative; }
+        #info-panel {
+            width: 300px;
+            min-width: 250px;
+            height: 100%;
+            background-color: #f0f4f8; /* Light blue-gray */
+            padding: 20px;
+            box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            color: #334155; /* Slate-700 */
+        }
+        .protein-list-item {
+            padding: 10px;
+            margin-bottom: 8px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            border: 1px solid #e2e8f0; /* Slate-200 */
+        }
+        .protein-list-item:hover {
+            background-color: #e0e7ff; /* Indigo-100 */
+            transform: translateY(-2px);
+        }
+        .protein-list-item.selected {
+            background-color: #c7d2fe; /* Indigo-200 */
+            font-weight: bold;
+            border-left: 4px solid #6366f1; /* Indigo-500 */
+        }
+        h1, h2, h3 { color: #475569; } /* Slate-600 */
+        #protein-details-content p { margin-bottom: 0.5rem; }
+        #protein-details-content strong { color: #1e293b; } /* Slate-800 */
+
+        /* Loading indicator */
+        #loading-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.2rem;
+            color: #475569;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 8px;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="info-panel">
+            <h1 class="text-2xl font-bold mb-6">Protein Map</h1>
+            
+            <h2 class="text-xl font-semibold mb-3">Select Protein:</h2>
+            <div id="protein-list" class="mb-6">
+                </div>
+
+            <h2 class="text-xl font-semibold mb-3">Protein Details:</h2>
+            <div id="protein-details-content">
+                <p>Select a protein from the list to see its details.</p>
+            </div>
+        </div>
+        <div id="renderer-container">
+            <div id="loading-indicator" style="display: none;">Loading 3D Model...</div>
+            </div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        let scene, camera, renderer, controls;
+        let cellMesh, nucleusMesh;
+        const proteinMarkers = new Map(); // To store protein marker meshes
+        let selectedProteinMarker = null;
+
+        // --- (Simulated) Data that could come from Gemini API ---
+        const proteinDataStore = [
+            {
+                id: "histone_h3",
+                name: "Histone H3",
+                localization: "Nucleus",
+                function: "Core component of nucleosome. Plays a critical role in chromatin structure, packaging DNA and regulating gene expression.",
+                // Visualization properties
+                color: 0xff6347, // Tomato red
+                mapPosition: new THREE.Vector3(0, 0.2, 0.1) // Inside nucleus
+            },
+            {
+                id: "actin_beta",
+                name: "β-Actin",
+                localization: "Cytoplasm",
+                function: "Highly conserved protein involved in cell motility, structure, and integrity. Forms microfilaments.",
+                color: 0x90ee90, // Light green
+                mapPosition: new THREE.Vector3(0.5, 0.3, -0.2) // Cytoplasm
+            },
+            {
+                id: "egfr",
+                name: "EGFR",
+                localization: "Cell Membrane",
+                function: "Epidermal Growth Factor Receptor. Transmembrane protein that activates signaling pathways for cell growth and proliferation.",
+                color: 0xadd8e6, // Light blue
+                mapPosition: new THREE.Vector3(0, 0.8, 0) // On cell membrane (approximated)
+            },
+            {
+                id: "cox1",
+                name: "Cytochrome c oxidase I (COX1)",
+                localization: "Mitochondria",
+                function: "Key enzyme in cellular respiration, part of the electron transport chain in mitochondria.",
+                color: 0xffa500, // Orange
+                mapPosition: new THREE.Vector3(-0.4, -0.3, 0.3) // Cytoplasm (representing mitochondria location)
+            }
+        ];
+        // --- End of Simulated Data ---
+
+        function init() {
+            const container = document.getElementById('renderer-container');
+            const loadingIndicator = document.getElementById('loading-indicator');
+            loadingIndicator.style.display = 'block';
+
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xdeeaf6); // Lighter blue-gray background
+
+            // Camera
+            camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.set(0, 1.5, 3.5);
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.shadowMap.enabled = true;
+            container.appendChild(renderer.domElement);
+
+            // Lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+            scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(5, 10, 7.5);
+            directionalLight.castShadow = true;
+            scene.add(directionalLight);
+
+            // Controls
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.screenSpacePanning = false;
+            controls.minDistance = 1;
+            controls.maxDistance = 20;
+
+            // Create cell model
+            createCellModel();
+
+            // Populate protein list and markers
+            populateProteinList();
+            proteinDataStore.forEach(createProteinMarker);
+            
+            // Handle window resize
+            window.addEventListener('resize', onWindowResize, false);
+
+            // Start animation loop
+            animate();
+            loadingIndicator.style.display = 'none';
+        }
+
+        function createCellModel() {
+            // Cell Membrane (outer sphere)
+            const cellGeometry = new THREE.SphereGeometry(1.5, 64, 64); // Radius 1.5
+            const cellMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0xcce0ff, // Pale blue
+                transparent: true, 
+                opacity: 0.3,
+                shininess: 50
+            });
+            cellMesh = new THREE.Mesh(cellGeometry, cellMaterial);
+            cellMesh.receiveShadow = true;
+            scene.add(cellMesh);
+
+            // Nucleus (inner sphere)
+            const nucleusGeometry = new THREE.SphereGeometry(0.6, 32, 32); // Radius 0.6
+            const nucleusMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0xffd700, // Gold
+                transparent: true, 
+                opacity: 0.6,
+                shininess: 30
+            });
+            nucleusMesh = new THREE.Mesh(nucleusGeometry, nucleusMaterial);
+            nucleusMesh.position.set(0, 0, 0); // Centered
+            nucleusMesh.castShadow = true;
+            scene.add(nucleusMesh);
+
+            // Simple representation for Mitochondria (could be more complex)
+            // For simplicity, we'll just place COX1 marker in a typical cytoplasmic region
+            // In a real app, you'd model mitochondria as distinct shapes.
+        }
+
+        function populateProteinList() {
+            const listElement = document.getElementById('protein-list');
+            listElement.innerHTML = ''; // Clear existing list
+
+            proteinDataStore.forEach(protein => {
+                const item = document.createElement('div');
+                item.classList.add('protein-list-item');
+                item.textContent = protein.name;
+                item.dataset.proteinId = protein.id;
+                item.addEventListener('click', () => handleProteinSelection(protein.id));
+                listElement.appendChild(item);
+            });
+        }
+
+        function createProteinMarker(protein) {
+            const markerGeometry = new THREE.SphereGeometry(0.08, 16, 16); // Small sphere for marker
+            const markerMaterial = new THREE.MeshPhongMaterial({ 
+                color: protein.color,
+                emissive: protein.color, // Make it glow slightly
+                emissiveIntensity: 0.3,
+                shininess: 80
+            });
+            const marker = new THREE.Mesh(markerGeometry, markerMaterial);
+            
+            // Adjust position based on localization for visualization
+            let visualPosition = protein.mapPosition.clone();
+            if (protein.localization === "Cell Membrane") {
+                // Place on the surface of the cellMesh
+                visualPosition.normalize().multiplyScalar(1.5); // cellMesh radius
+            } else if (protein.localization === "Nucleus") {
+                // Place inside or on the surface of nucleusMesh
+                visualPosition.normalize().multiplyScalar(0.55); // slightly inside nucleusMesh radius
+            }
+            // For "Cytoplasm" or "Mitochondria", use mapPosition as is (relative to cell center)
+            // but ensure it's outside the nucleus and inside the cell.
+            // This is a simplification.
+            
+            marker.position.copy(visualPosition);
+            marker.userData = protein; // Store protein data with the marker
+            marker.castShadow = true;
+            scene.add(marker);
+            proteinMarkers.set(protein.id, marker);
+        }
+        
+        async function fetchProteinDetailsFromGemini(proteinName) {
+            // --- This is where you would make a call to the Gemini API ---
+            // For example:
+            // const prompt = `Provide a brief one-sentence function and common subcellular localization for the human protein: ${proteinName}. Format as JSON: {"function": "...", "localization": "..."}`;
+            // const apiKey = "YOUR_GEMINI_API_KEY"; // Store securely!
+            // const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+            // const payload = { contents: [{ parts: [{ text: prompt }] }] };
+            // try {
+            //     const response = await fetch(apiUrl, {
+            //         method: 'POST',
+            //         headers: { 'Content-Type': 'application/json' },
+            //         body: JSON.stringify(payload)
+            //     });
+            //     if (!response.ok) throw new Error(`API error: ${response.status}`);
+            //     const result = await response.json();
+            //     const text = result.candidates[0].content.parts[0].text;
+            //     return JSON.parse(text); // Assuming Gemini returns valid JSON
+            // } catch (error) {
+            //     console.error("Error fetching from Gemini API:", error);
+            //     return { function: "Error fetching data.", localization: "Unknown" };
+            // }
+            // --- Simulation for this demo ---
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    const protein = proteinDataStore.find(p => p.name === proteinName);
+                    if (protein) {
+                        resolve({ function: protein.function, localization: protein.localization });
+                    } else {
+                        resolve({ function: "Details not found.", localization: "Unknown" });
+                    }
+                }, 300); // Simulate network delay
+            });
+        }
+
+
+        async function handleProteinSelection(proteinId) {
+            const selectedProtein = proteinDataStore.find(p => p.id === proteinId);
+            if (!selectedProtein) return;
+
+            // Update UI list selection
+            document.querySelectorAll('.protein-list-item').forEach(item => {
+                item.classList.remove('selected');
+                if (item.dataset.proteinId === proteinId) {
+                    item.classList.add('selected');
+                }
+            });
+
+            // Update details panel
+            const detailsContent = document.getElementById('protein-details-content');
+            detailsContent.innerHTML = `<p><strong>Loading details for ${selectedProtein.name}...</strong></p>`;
+            
+            // In a real app, you might fetch this dynamically using Gemini
+            // For this demo, we use the pre-defined function and localization
+            // const geminiData = await fetchProteinDetailsFromGemini(selectedProtein.name);
+
+            detailsContent.innerHTML = `
+                <p><strong>Name:</strong> ${selectedProtein.name}</p>
+                <p><strong>Function:</strong> ${selectedProtein.function}</p>
+                <p><strong>Typical Localization:</strong> ${selectedProtein.localization}</p>
+            `;
+
+            // Highlight in 3D scene
+            if (selectedProteinMarker) {
+                selectedProteinMarker.material.emissiveIntensity = 0.3; // Reset previous
+                selectedProteinMarker.scale.set(1,1,1);
+            }
+            
+            const marker = proteinMarkers.get(proteinId);
+            if (marker) {
+                selectedProteinMarker = marker;
+                marker.material.emissiveIntensity = 0.8; // Make it glow more
+                marker.scale.set(1.5, 1.5, 1.5); // Make it slightly larger
+
+                // Gently move camera to focus on the marker
+                const targetPosition = marker.position.clone();
+                const cameraPosition = targetPosition.clone().add(new THREE.Vector3(0, 0.5, 1.5).normalize().multiplyScalar(2)); // Offset camera
+                
+                // Simple tweening for camera movement (can be replaced with a library like TWEEN.js)
+                const startPosition = camera.position.clone();
+                const startTarget = controls.target.clone();
+                let t = 0;
+                const duration = 1; // seconds
+                function animateFocus() {
+                    t += 0.02 / duration; // Adjust speed
+                    if (t < 1) {
+                        camera.position.lerpVectors(startPosition, cameraPosition, t);
+                        controls.target.lerpVectors(startTarget, targetPosition, t);
+                        controls.update();
+                        requestAnimationFrame(animateFocus);
+                    } else {
+                        camera.position.copy(cameraPosition);
+                        controls.target.copy(targetPosition);
+                        controls.update();
+                    }
+                }
+                animateFocus();
+            }
+        }
+
+        function onWindowResize() {
+            const container = document.getElementById('renderer-container');
+            if (camera && renderer && container) {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update(); // Only required if controls.enableDamping or controls.autoRotate are set to true
+            renderer.render(scene, camera);
+        }
+
+        // Initialize the application
+        init();
+
+    </script>
+</body>
+</html>
