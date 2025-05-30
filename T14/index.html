@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Task Requester</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>MCP Task Requester</h1>
+
+        <div class="task-definition-section">
+            <h2>Define Your Task</h2>
+            <textarea id="taskDescription" placeholder="Enter a detailed description of your MCP task here..."></textarea>
+
+            <div class="mcp-purpose-options">
+                <h3>Select Task Purpose:</h3>
+                <div class="button-group">
+                    <button class="purpose-button" data-purpose="Google Search & Save">Google Search & Save</button>
+                    <button class="purpose-button" data-purpose="Excel Data Processing">Excel Data Processing</button>
+                    <button class="purpose-button" data-purpose="Terminal Command">Terminal Command</button>
+                    <button class="purpose-button" data-purpose="Other">Other (Specify Below)</button>
+                </div>
+            </div>
+
+            <button id="submitTask">Submit Task</button>
+        </div>
+
+        <div class="result-section">
+            <h2>Task Result</h2>
+            <pre id="resultDisplay">Results will appear here...</pre>
+            <button id="downloadResultBtn">Download Result</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
