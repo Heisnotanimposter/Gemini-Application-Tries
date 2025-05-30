@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Satirical Strategy Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles can go here if needed, but Tailwind should handle most */
+        body {
+            font-family: 'Inter', sans-serif; /* Using Inter font */
+            background-color: #f4f7f6; /* Light background */
+            color: #333; /* Dark text */
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px; /* Max width for content */
+        }
+        /* Ensure buttons have good touch target size */
+        button {
+            padding: 0.75rem 1.5rem; /* Tailwind p-3 py-2 px-4 */
+            margin: 0.5rem; /* Tailwind m-2 */
+            border-radius: 0.5rem; /* Tailwind rounded-lg */
+        }
+        /* Style for the output area */
+        #strategyOutput {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            padding: 1.5rem; /* Tailwind p-6 */
+            border-radius: 0.5rem; /* Tailwind rounded-lg */
+            min-height: 100px; /* Ensure it has some height even when empty */
+            white-space: pre-wrap; /* Preserve line breaks */
+            word-wrap: break-word; /* Break long words */
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+    <div class="container mx-auto bg-white p-8 rounded-xl shadow-lg">
+        <h1 class="text-3xl font-bold mb-6 text-center">Satirical Strategy Generator</h1>
+
+        <p class="mb-6 text-center text-gray-600">
+            Need a strategy? Can't be bothered to understand your landscape? Don't care about situational awareness or gameplay? Need it fast? Minimal effort? No problem!
+        </p>
+
+        <div class="mb-6">
+            <h2 class="text-xl font-semibold mb-3">Available Buzzwords:</h2>
+            <div id="buzzwordList" class="text-sm text-gray-700">
+                </div>
+        </div>
+
+        <div class="mb-6">
+            <h2 class="text-xl font-semibold mb-3">Template:</h2>
+            <p class="text-gray-700 italic">
+                Our strategy is [word]. We will lead a [word] effort of the market through our use of [word] and [word] to build a [word]. By being both [word] and [word], our [word] approach will drive [word] throughout the organisation. Synergies between our [word] and [word] will enable us to capture the upside by becoming [word] in a [word] world. These transformations combined with [word] due to our [word] will create a [word] through [word] and [word].
+            </p>
+        </div>
+
+        <div class="text-center mb-6">
+            <button id="generateButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out">
+                Generate Strategy
+            </button>
+        </div>
+
+        <div id="strategyOutput" class="mt-6">
+            Click "Generate Strategy" to see the magic happen!
+        </div>
+    </div>
+
+    <script>
+        // Define the list of buzzwords
+        const buzzwords = [
+            "digital first", "agile", "open", "innovative", "efficiency",
+            "competitive advantage", "ecosystem", "networked", "collaborative",
+            "learning organisation", "social media", "revolution", "cloud based",
+            "big data", "secure", "internet of things", "growth", "value",
+            "customer focused", "digital business", "disruptive", "data leaders",
+            "insight from data", "platform", "sustainable", "culture"
+        ];
+
+        // Define the strategy template with a specific placeholder
+        const strategyTemplate = "Our strategy is [word]. We will lead a [word] effort of the market through our use of [word] and [word] to build a [word]. By being both [word] and [word], our [word] approach will drive [word] throughout the organisation. Synergies between our [word] and [word] will enable us to capture the upside by becoming [word] in a [word] world. These transformations combined with [word] due to our [word] will create a [word] through [word] and [word].";
+
+        // Count the number of placeholders in the template
+        const placeholderCount = (strategyTemplate.match(/\[word\]/g) || []).length;
+
+        // Get references to the necessary DOM elements
+        const generateBtn = document.getElementById('generateButton');
+        const strategyOutput = document.getElementById('strategyOutput');
+        const buzzwordListDiv = document.getElementById('buzzwordList');
+
+        // Function to get a random word from the list
+        function getRandomWord(wordList) {
+            const randomIndex = Math.floor(Math.random() * wordList.length);
+            return wordList[randomIndex];
+        }
+
+        // Function to generate the strategy
+        function generateStrategy() {
+            let generatedStrategy = strategyTemplate;
+            // Loop through the number of placeholders
+            for (let i = 0; i < placeholderCount; i++) {
+                const randomWord = getRandomWord(buzzwords);
+                // Replace only the first occurrence of the placeholder
+                generatedStrategy = generatedStrategy.replace('[word]', randomWord);
+            }
+            // Display the generated strategy
+            strategyOutput.textContent = generatedStrategy;
+        }
+
+        // Function to display the list of buzzwords on the page
+        function displayBuzzwords() {
+            buzzwordListDiv.textContent = buzzwords.join(', ');
+        }
+
+        // Add event listener to the button to trigger strategy generation
+        generateBtn.addEventListener('click', generateStrategy);
+
+        // Display the buzzwords when the page loads
+        document.addEventListener('DOMContentLoaded', displayBuzzwords);
+
+        // Initial generation on load (optional)
+        // document.addEventListener('DOMContentLoaded', generateStrategy);
+
+    </script>
+</body>
+</html>
